@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciBox PDF Uploader</title>
+    <style>
+        :root {
+            --color-primary: #8DC63F;
+            --color-primary-hover: #4CAF50;
+            --color-border: #e2e8f0;
+            --color-background: #f5f5f5;
+            --color-white: #ffffff;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--color-background);
+        }
+
+        .pdf-uploader {
+            background-color: var(--color-white);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #edf2f7;
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .dropzone {
+            border: 2px dashed var(--color-border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .dropzone.drag-over {
+            border-color: var(--color-primary);
+            background-color: #f0f9ff;
+        }
+
+        .metadata {
+            margin-bottom: 20px;
+        }
+
+        .metadata input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .button:hover {
+            background-color: var(--color-primary-hover);
+        }
+
+        .button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--color-primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        #uploadResult {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .metadata textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="pdf-uploader">
+        <div class="header">
+            <h1>SciBox PDF Uploader</h1>
+        </div>
+
+        <div class="status" id="status">Status: Not connected</div>
+
+        <button class="button" id="connectBtn">Connect Wallet</button>
+        <button class="button" id="initIrysBtn" disabled>Initialize Irys</button>
+
+        <div class="dropzone" id="dropZone">
+            <p>Drag and drop your PDF file here or click to select</p>
+            <input type="file" id="fileInput" accept=".pdf" style="display: none">
+        </div>
+
+        <div class="metadata">
+            <input type="text" id="titleInput" placeholder="Enter paper title...">
+            <input type="text" id="doiInput" placeholder="Enter DOI...">
+            <input type="text" id="authorsInput" placeholder="Enter authors (comma separated)...">
+            <input type="text" id="aidInput" placeholder="Enter paper ID...">
+            <textarea id="abstractInput" placeholder="Enter abstract..." rows="4"></textarea>
+        </div>
+
+        <button class="button" id="uploadBtn" disabled>Upload PDF</button>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading chunk 0/0</div>
+        </div>
+
+        <div id="uploadResult"></div>
+    </div>
+
+    <script src="https://uploader.irys.xyz/Cip4wmuMv1K3bmcL4vYoZuV2aQQnnzViqwHm6PCei3QX/bundle.js"></script>
+    <script>
+        class PDFUploader {
+            constructor() {
+                this.MAX_CHUNK_SIZE = 50 * 1024; // 50KB per chunk
+                this.initElements();
+                this.initEventListeners();
+                this.wallet = null;
+                this.irys = null;
+            }
+
+            initElements() {
+                this.elements = {
+                    status: document.getElementById('status'),
+                    connectBtn: document.getElementById('connectBtn'),
+                    initIrysBtn: document.getElementById('initIrysBtn'),
+                    uploadBtn: document.getElementById('uploadBtn'),
+                    dropZone: document.getElementById('dropZone'),
+                    fileInput: document.getElementById('fileInput'),
+                    titleInput: document.getElementById('titleInput'),
+                    doiInput: document.getElementById('doiInput'),
+                    authorsInput: document.getElementById('authorsInput'),
+                    aidInput: document.getElementById('aidInput'),
+                    abstractInput: document.getElementById('abstractInput'),
+                    progress: document.getElementById('progress'),
+                    progressFill: document.getElementById('progressFill'),
+                    progressText: document.getElementById('progressText'),
+                    uploadResult: document.getElementById('uploadResult')
+                };
+            }
+
+            initEventListeners() {
+                this.elements.connectBtn.addEventListener('click', () => this.connectWallet());
+                this.elements.initIrysBtn.addEventListener('click', () => this.initializeIrys());
+                this.elements.uploadBtn.addEventListener('click', () => this.uploadPDF());
+                this.elements.dropZone.addEventListener('click', () => this.elements.fileInput.click());
+                this.elements.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                this.initDropZone();
+            }
+
+            initDropZone() {
+                this.elements.dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.elements.dropZone.classList.add('drag-over');
+                });
+
+                this.elements.dropZone.addEventListener('dragleave', () => {
+                    this.elements.dropZone.classList.remove('drag-over');
+                });
+
+                this.elements.dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.elements.dropZone.classList.remove('drag-over');
+                    const file = e.dataTransfer.files[0];
+                    if (file) this.handleFile(file);
+                });
+            }
+
+            async connectWallet() {
+                try {
+                    if (!window.solana) {
+                        this.elements.status.textContent = 'Please install Solana wallet';
+                        return;
+                    }
+                    await window.solana.connect();
+                    this.wallet = window.solana;
+                    this.elements.status.textContent = `Connected: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)}`;
+                    this.elements.connectBtn.textContent = 'Connected';
+                    this.elements.initIrysBtn.disabled = false;
+                } catch (error) {
+                    this.elements.status.textContent = 'Connection failed';
+                }
+            }
+
+            async initializeIrys() {
+                try {
+                    const originalSignMessage = window.solana.signMessage;
+                    window.solana.signMessage = async (msg) => {
+                        const signedMessage = await originalSignMessage.call(window.solana, msg);
+                        return signedMessage.signature || signedMessage;
+                    };
+                    this.irys = await WebIrys.WebUploader(WebIrys.WebSolana).withProvider(window.solana);
+                    this.elements.status.textContent = `Ready to upload (${this.irys.address.slice(0,4)}...${this.irys.address.slice(-4)})`;
+                    this.elements.initIrysBtn.textContent = 'Initialized';
+                    
+                    // 如果已经选择了文件，启用上传按钮
+                    if (this.pdfFile) {
+                        this.elements.uploadBtn.disabled = false;
+                    }
+                } catch (error) {
+                    this.elements.status.textContent = 'Initialization failed';
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) this.handleFile(file);
+            }
+
+            handleFile(file) {
+                if (!file.type.match('application/pdf')) {
+                    alert('Please select a PDF file');
+                    return;
+                }
+                this.pdfFile = file;
+                this.elements.uploadBtn.disabled = !this.irys;
+                this.elements.dropZone.innerHTML = `<p>Selected: ${file.name}</p>`;
+            }
+
+            async uploadPDF() {
+                if (!this.pdfFile || !this.irys) return;
+                
+                const title = this.elements.titleInput.value.trim();
+                const doi = this.elements.doiInput.value.trim();
+                const authors = this.elements.authorsInput.value.trim();
+                const aid = this.elements.aidInput.value.trim();
+                const abstract = this.elements.abstractInput.value.trim();
+                
+                // 只要求 DOI 是必填的
+                if (!doi) {
+                    alert('Please enter at least the DOI');
+                    return;
+                }
+
+                try {
+                    this.elements.uploadBtn.disabled = true;
+                    this.elements.progress.style.display = 'block';
+                    
+                    // 如果有元数据就上传
+                    if (title || authors || aid || abstract) {
+                        this.elements.status.textContent = 'Uploading metadata...';
+                        const metadata = {
+                            title: title || '',
+                            doi: doi,
+                            authors: authors || '',
+                            aid: aid || '',
+                            abstract: abstract || ''
+                        };
+
+                        const metadataTags = [
+                            { name: "App-Name", value: "scivault" },
+                            { name: "Content-Type", value: "application/json" },
+                            { name: "Version", value: "1.0.3" },
+                            { name: "doi", value: doi }
+                        ];
+
+                        // 只添加有值的标签
+                        if (title) metadataTags.push({ name: "title", value: title });
+                        if (authors) metadataTags.push({ name: "authors", value: authors });
+                        if (aid) metadataTags.push({ name: "aid", value: aid });
+
+                        const metadataReceipt = await this.irys.upload(JSON.stringify(metadata), { tags: metadataTags });
+                        this.metadataId = metadataReceipt.id; // 保存元数据ID以供显示
+                    }
+
+                    // 上传 PDF 文件
+                    this.elements.status.textContent = 'Uploading PDF chunks...';
+                    const chunks = await this.slicePDF(this.pdfFile);
+                    const pdfTags = [
+                        { name: "Content-Type", value: "application/pdf" },
+                        { name: "application", value: "scivault" },
+                        { name: "Version", value: "1.0.3" },
+                        { name: "Type", value: "pdf-index" },
+                        { name: "Collection", value: doi }
+                    ];
+
+                    const receiptIds = [];
+                    for (let i = 0; i < chunks.length; i++) {
+                        this.updateProgress(i + 1, chunks.length);
+                        const receipt = await this.irys.upload(chunks[i], { tags: pdfTags });
+                        receiptIds.push(receipt.id);
+                    }
+                    
+                    this.elements.uploadResult.style.display = 'block';
+                    let resultHtml = `
+                        <h3>Upload Successful!</h3>
+                        <p>PDF Chunks: ${receiptIds.length}</p>
+                        <p>First Chunk: <a href="https://gateway.irys.xyz/${receiptIds[0]}" target="_blank">View</a></p>
+                    `;
+                    
+                    // 如果上传了元数据，显示元数据ID
+                    if (this.metadataId) {
+                        resultHtml = `
+                            <h3>Upload Successful!</h3>
+                            <p>Metadata Transaction ID: ${this.metadataId}</p>
+                            <p>PDF Chunks: ${receiptIds.length}</p>
+                        `;
+                    }
+                    
+                    this.elements.uploadResult.innerHTML = resultHtml;
+                    this.elements.status.textContent = 'Upload complete!';
+                } catch (error) {
+                    alert('Upload failed: ' + error.message);
+                    console.error('Upload error:', error);
+                    this.elements.status.textContent = 'Upload failed';
+                } finally {
+                    this.elements.uploadBtn.disabled = false;
+                    this.metadataId = null; // 重置元数据ID
+                }
+            }
+
+            async slicePDF(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64 = e.target.result.split(',')[1];
+                        const chunks = [];
+                        for (let i = 0; i < base64.length; i += this.MAX_CHUNK_SIZE) {
+                            chunks.push(base64.slice(i, i + this.MAX_CHUNK_SIZE));
+                        }
+                        resolve(chunks);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            updateProgress(current, total) {
+                const percentage = (current / total) * 100;
+                this.elements.progressFill.style.width = `${percentage}%`;
+                this.elements.progressText.textContent = `Uploading chunk ${current}/${total}`;
+            }
+        }
+
+        // Initialize uploader when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PDFUploader();
+        });
+    </script>
+</body>
+</html>
