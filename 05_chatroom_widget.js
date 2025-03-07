@@ -200,21 +200,48 @@ const chatroomWidget = {
         }
 
         @media (max-width: 768px) {
-            .chat-container {
-                width: 280px;
+            .chatroom-widget {
+                right: 16px;
+                bottom: 80px;
+            }
+            .chat-toggle {
+                width: 48px;
+                height: 48px;
+                min-width: unset;
+                padding: 12px;
+                border-radius: 50%;
+                justify-content: center;
             }
             .button-text {
                 display: none;
             }
-            .chat-toggle {
-                width: 36px;
-                min-width: unset;
-                padding: 8px;
-                border-radius: 50%;
+            .chat-toggle svg {
+                margin: 0;
             }
-            .chatroom-widget {
-                right: 20px;
-                bottom: 100px;
+            .chat-container {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                z-index: 1001;
+            }
+            .chat-messages {
+                height: calc(100% - 140px);
+            }
+            .chat-input {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #fff;
+            }
+            .unread-count {
+                top: 0;
+                right: 0;
             }
         }
     `,

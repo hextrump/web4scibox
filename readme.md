@@ -63,3 +63,16 @@ Each functional component (widget) in SciBox is:
 ---
 
 SciBox represents a significant step forward in decentralized academic publishing and sharing. By leveraging Web4 technologies and blockchain storage, it provides a robust, censorship-resistant platform for academic knowledge distribution.
+
+
+
+// Layout 职责
+- 加载组件
+- 处理组件查询和数据获取
+- 提供最基础的容器布局
+- 管理主题切换
+
+// 组件职责
+- 自己的样式和布局
+- 响应式设计
+- 内部交互逻辑

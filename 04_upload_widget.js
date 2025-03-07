@@ -47,16 +47,22 @@ const uploadWidget = {
             margin-left: 4px;
         }
         @media (max-width: 768px) {
+            .upload-widget {
+                right: 16px;
+                bottom: 16px;
+            }
+            .upload-button {
+                width: 48px;
+                height: 48px;
+                padding: 12px;
+                border-radius: 50%;
+                justify-content: center;
+            }
             .button-text {
                 display: none;
             }
-            .upload-button {
-                padding: 12px;
-                border-radius: 50%;
-            }
-            .upload-widget {
-                right: 20px;
-                bottom: 20px;
+            .upload-button svg {
+                margin: 0;
             }
         }
     `,

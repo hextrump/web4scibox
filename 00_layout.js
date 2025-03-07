@@ -1,77 +1,217 @@
 const layoutContent = {
     html: `
         <div class="layout-container">
-            <div id="title-container">
-                <!-- Title widget will be loaded here -->
+            <div class="theme-toggle">
+                <button id="themeToggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
             </div>
-            <div id="search-container">
-                <!-- Search widget will be loaded here -->
+            <div id="title-container"></div>
+            <div id="main-container">
+                <div id="search-container"></div>
+                <div id="latest-papers-container"></div>
             </div>
-            <div id="latest-papers-container">
-                <!-- Latest papers widget will be loaded here -->
-            </div>
-            <div id="chat-container">
-                <!-- Chat widget will be loaded here -->
-            </div>
-            <div id="upload-container">
-                <!-- Upload widget will be loaded here -->
-            </div>
+            <div id="upload-container"></div>
+            <div id="chatroom-container"></div>
         </div>
     `,
     css: `
+        :root {
+            /* Light theme */
+            --bg-light: #ffffff;
+            --bg-secondary-light: #f8f9fa;
+            --text-primary-light: #1a1a1a;
+            --text-secondary-light: #4a5568;
+            --accent-light: #3182ce;
+            --border-light: #e2e8f0;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            
+            /* Dark theme */
+            --bg-dark: #0A192F;
+            --bg-secondary-dark: #112240;
+            --text-primary-dark: #CCD6F6;
+            --text-secondary-dark: #8892B0;
+            --accent-dark: #64FFDA;
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.2);
+
+            /* Common variables */
+            --container-width: 1200px;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-light);
+            color: var(--text-primary-light);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        body.dark-theme {
+            background: var(--bg-dark);
+            color: var(--text-primary-dark);
+        }
+
         .layout-container {
             width: 100%;
-            max-width: 1200px;
+            max-width: var(--container-width);
             margin: 0 auto;
             padding: 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            position: relative;
         }
-        #title-container {
-            margin-bottom: 30px;
+
+        #main-container {
+            padding: 20px 0;
         }
-        #search-container {
-            margin-bottom: 20px;
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
         }
-        #latest-papers-container {
-            margin-bottom: 40px;
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            color: var(--text-primary-light);
+            transition: background-color 0.3s;
+        }
+
+        .dark-theme .theme-toggle button {
+            color: var(--text-primary-dark);
+        }
+
+        .theme-toggle button:hover {
+            background-color: var(--bg-secondary-light);
+        }
+
+        .dark-theme .theme-toggle button:hover {
+            background-color: var(--bg-secondary-dark);
+        }
+
+        .sun-icon {
+            display: block;
+        }
+
+        .moon-icon {
+            display: none;
+        }
+
+        .dark-theme .sun-icon {
+            display: none;
+        }
+
+        .dark-theme .moon-icon {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .layout-container {
+                padding: 15px;
+            }
+
+            #main-container {
+                padding: 15px 0;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+            }
         }
     `,
     js: `
-        // Load Irys bundle script and initialize widgets after it's loaded
-        function loadIrysAndInitialize() {
-            return new Promise((resolve, reject) => {
-                const irysScript = document.createElement('script');
-                irysScript.src = 'https://uploader.irys.xyz/Cip4wmuMv1K3bmcL4vYoZuV2aQQnnzViqwHm6PCei3QX/bundle.js';
-                irysScript.onload = () => resolve();
-                irysScript.onerror = () => reject(new Error('Failed to load Irys bundle'));
-                document.head.appendChild(irysScript);
+        // Theme toggle functionality
+        function initTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.body.classList.add('dark-theme');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
             });
         }
 
+        // Initialize components
+        async function initialize() {
+            try {
+                initTheme();
+                
+                // Load components
+                const components = [
+                    { id: 'title-container', type: 'title' },
+                    { id: 'search-container', type: 'search' },
+                    { id: 'latest-papers-container', type: 'latest-papers' },
+                    { id: 'upload-container', type: 'upload' },
+                    { id: 'chatroom-container', type: 'chatroom' }
+                ];
+
+                for (const component of components) {
+                    await loadWidget(component.id, component.type);
+                }
+                
+                console.log('All components loaded successfully');
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        }
+
+        // Load widget function
         async function loadWidget(containerId, widgetType) {
-            const query = \`
-                query {
-                    transactions(
-                        tags: [
-                            { name: "Content-Type", values: ["application/json"] },
-                            { name: "scinet", values: ["\${widgetType}"] },
-                            { name: "Version", values: ["0.1.1"] }
-                        ],
-                        first: 1,
-                        order: DESC
-                    ) {
-                        edges {
-                            node {
-                                id
-                                tags {
-                                    name
-                                    value
+            try {
+                const query = \`
+                    query {
+                        transactions(
+                            tags: [
+                                { name: "Content-Type", values: ["application/json"] },
+                                { name: "scinet", values: ["\${widgetType}"] },
+                                { name: "Version", values: ["0.1.2"] }
+                            ],
+                            first: 1,
+                            order: DESC
+                        ) {
+                            edges {
+                                node {
+                                    id
+                                    tags {
+                                        name
+                                        value
+                                    }
                                 }
                             }
                         }
-                    }
-                }\`;
+                    }\`;
 
-            try {
                 const response = await fetch('https://uploader.irys.xyz/graphql', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -90,6 +230,7 @@ const layoutContent = {
             }
         }
 
+        // Apply widget function
         function applyWidget(containerId, widget) {
             const container = document.getElementById(containerId);
             
@@ -107,26 +248,6 @@ const layoutContent = {
                 const script = document.createElement('script');
                 script.textContent = widget.js;
                 document.body.appendChild(script);
-            }
-        }
-
-        // Initialize everything in the correct order
-        async function initialize() {
-            try {
-                // First load Irys bundle
-                await loadIrysAndInitialize();
-                console.log('Irys bundle loaded successfully');
-
-                // Then load widgets in sequence
-                await loadWidget('title-container', 'title');
-                await loadWidget('search-container', 'search');
-                await loadWidget('latest-papers-container', 'latest-papers');
-                await loadWidget('chat-container', 'chat');
-                await loadWidget('upload-container', 'upload');
-                
-                console.log('All widgets loaded successfully');
-            } catch (error) {
-                console.error('Initialization error:', error);
             }
         }
 
