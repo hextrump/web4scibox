@@ -76,3 +76,6 @@ SciBox represents a significant step forward in decentralized academic publishin
 - 自己的样式和布局
 - 响应式设计
 - 内部交互逻辑
+
+0.1.1
+https://uploader.irys.xyz/8F3FmLwBCArk2jYbMqtWJYHbm2NCmRWB7zriPBCSNRqh/index.html
