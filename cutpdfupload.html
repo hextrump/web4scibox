@@ -165,10 +165,14 @@
     </div>
 
     <script src="https://uploader.irys.xyz/Cip4wmuMv1K3bmcL4vYoZuV2aQQnnzViqwHm6PCei3QX/bundle.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script>
         class PDFUploader {
             constructor() {
                 this.MAX_CHUNK_SIZE = 50 * 1024; // 50KB per chunk
+                this.TOKEN_MINT = 'GxdTh6udNstGmLLk9ztBb6bkrms7oLbrJp5yzUaVpump';
+                this.MIN_TOKEN_AMOUNT = 10000;
+                this.RPC_ENDPOINT = 'https://indulgent-warmhearted-paper.solana-mainnet.quiknode.pro/738b88223793499b6ea217c37ef429603e9b0544/';
                 this.initElements();
                 this.initEventListeners();
                 this.wallet = null;
@@ -230,11 +234,65 @@
                     }
                     await window.solana.connect();
                     this.wallet = window.solana;
-                    this.elements.status.textContent = `Connected: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)}`;
-                    this.elements.connectBtn.textContent = 'Connected';
-                    this.elements.initIrysBtn.disabled = false;
+                    
+                    this.elements.status.textContent = 'Checking token balance...';
+                    
+                    try {
+                        // 检查代币余额
+                        const balance = await this.checkTokenBalance();
+                        
+                        if (balance >= this.MIN_TOKEN_AMOUNT) {
+                            this.elements.status.textContent = `Connected: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)} | SCIHUB: ${balance}`;
+                            this.elements.connectBtn.textContent = 'Connected';
+                            this.elements.initIrysBtn.disabled = false;
+                        } else {
+                            this.elements.status.textContent = `Insufficient SCIHUB tokens: ${balance}/${this.MIN_TOKEN_AMOUNT} required`;
+                            this.elements.initIrysBtn.disabled = true;
+                        }
+                    } catch (balanceError) {
+                        console.error('Failed to check token balance:', balanceError);
+                        this.elements.status.textContent = 'Unable to check token balance. Please try again later.';
+                        // 仍然显示钱包已连接
+                        this.elements.connectBtn.textContent = 'Connected';
+                        // 暂时禁用初始化按钮
+                        this.elements.initIrysBtn.disabled = true;
+                    }
                 } catch (error) {
-                    this.elements.status.textContent = 'Connection failed';
+                    console.error('Wallet connection error:', error);
+                    this.elements.status.textContent = 'Connection failed: ' + (error.message || 'Unknown error');
+                }
+            }
+
+            async checkTokenBalance() {
+                try {
+                    const connection = new solanaWeb3.Connection(this.RPC_ENDPOINT, {
+                        commitment: 'confirmed',
+                        wsEndpoint: this.RPC_ENDPOINT.replace('https://', 'wss://')
+                    });
+                    
+                    // 获取用户的所有代币账户
+                    const tokenAccounts = await connection.getTokenAccountsByOwner(
+                        this.wallet.publicKey,
+                        {
+                            mint: new solanaWeb3.PublicKey(this.TOKEN_MINT)
+                        }
+                    );
+
+                    // 如果找到账户，解析余额
+                    if (tokenAccounts.value.length > 0) {
+                        const accountInfo = await connection.getParsedAccountInfo(
+                            tokenAccounts.value[0].pubkey
+                        );
+                        
+                        if (accountInfo.value?.data?.parsed?.info?.tokenAmount?.uiAmount !== undefined) {
+                            return accountInfo.value.data.parsed.info.tokenAmount.uiAmount;
+                        }
+                    }
+                    
+                    return 0;
+                } catch (error) {
+                    console.error('Error checking token balance:', error);
+                    throw error;
                 }
             }
 
@@ -273,6 +331,52 @@
                 this.elements.dropZone.innerHTML = `<p>Selected: ${file.name}</p>`;
             }
 
+            async retry(fn, { maxAttempts = 3, initialDelay = 1000, factor = 1.5 } = {}) {
+                let attempt = 1;
+                let delay = initialDelay;
+
+                while (attempt <= maxAttempts) {
+                    try {
+                        return await fn();
+                    } catch (error) {
+                        if (attempt === maxAttempts) {
+                            throw error;
+                        }
+                        console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= factor;
+                        attempt++;
+                    }
+                }
+            }
+
+            async processPDF(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const arrayBuffer = reader.result;
+                            const bytes = new Uint8Array(arrayBuffer);
+                            const chunks = [];
+                            
+                            // 将数据分块并编码为 base64
+                            for (let i = 0; i < bytes.length; i += this.MAX_CHUNK_SIZE) {
+                                const chunk = bytes.slice(i, i + this.MAX_CHUNK_SIZE);
+                                const base64Chunk = btoa(
+                                    chunk.reduce((data, byte) => data + String.fromCharCode(byte), '')
+                                );
+                                chunks.push(base64Chunk);
+                            }
+                            resolve(chunks);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error);
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
             async uploadPDF() {
                 if (!this.pdfFile || !this.irys) return;
                 
@@ -282,7 +386,6 @@
                 const aid = this.elements.aidInput.value.trim();
                 const abstract = this.elements.abstractInput.value.trim();
                 
-                // 只要求 DOI 是必填的
                 if (!doi) {
                     alert('Please enter at least the DOI');
                     return;
@@ -292,7 +395,7 @@
                     this.elements.uploadBtn.disabled = true;
                     this.elements.progress.style.display = 'block';
                     
-                    // 如果有元数据就上传
+                    // 上传元数据
                     if (title || authors || aid || abstract) {
                         this.elements.status.textContent = 'Uploading metadata...';
                         const metadata = {
@@ -310,33 +413,51 @@
                             { name: "doi", value: doi }
                         ];
 
-                        // 只添加有值的标签
                         if (title) metadataTags.push({ name: "title", value: title });
                         if (authors) metadataTags.push({ name: "authors", value: authors });
                         if (aid) metadataTags.push({ name: "aid", value: aid });
 
-                        const metadataReceipt = await this.irys.upload(JSON.stringify(metadata), { tags: metadataTags });
-                        this.metadataId = metadataReceipt.id; // 保存元数据ID以供显示
+                        await this.retry(async () => {
+                            const metadataReceipt = await this.irys.upload(JSON.stringify(metadata), { tags: metadataTags });
+                            this.metadataId = metadataReceipt.id;
+                        });
                     }
 
-                    // 上传 PDF 文件
+                    // 处理 PDF 文件
+                    this.elements.status.textContent = 'Processing PDF...';
+                    const chunks = await this.processPDF(this.pdfFile);
+                    
+                    // 上传 PDF chunks
                     this.elements.status.textContent = 'Uploading PDF chunks...';
-                    const chunks = await this.slicePDF(this.pdfFile);
-                    const pdfTags = [
-                        { name: "Content-Type", value: "application/pdf" },
-                        { name: "application", value: "scivault" },
-                        { name: "Version", value: "1.0.3" },
-                        { name: "Type", value: "pdf-index" },
-                        { name: "Collection", value: doi }
-                    ];
-
                     const receiptIds = [];
+                    
                     for (let i = 0; i < chunks.length; i++) {
                         this.updateProgress(i + 1, chunks.length);
-                        const receipt = await this.irys.upload(chunks[i], { tags: pdfTags });
-                        receiptIds.push(receipt.id);
+                        
+                        const tags = [
+                            { name: "App-Name", value: "scivault" },
+                            { name: "Content-Type", value: "application/pdf" },
+                            { name: "Version", value: "1.0.3" },
+                            { name: "doi", value: doi },
+                            { name: "Chunk-Index", value: i.toString() },
+                            { name: "Total-Chunks", value: chunks.length.toString() }
+                        ];
+
+                        if (title) tags.push({ name: "title", value: title });
+
+                        try {
+                            const receipt = await this.retry(async () => {
+                                return await this.irys.upload(chunks[i], { tags });
+                            });
+                            receiptIds.push(receipt.id);
+                            console.log(`Successfully uploaded chunk ${i + 1}/${chunks.length}`);
+                        } catch (error) {
+                            console.error(`Failed to upload chunk ${i + 1}:`, error);
+                            throw error;
+                        }
                     }
                     
+                    // 显示上传结果
                     this.elements.uploadResult.style.display = 'block';
                     let resultHtml = `
                         <h3>Upload Successful!</h3>
@@ -344,13 +465,8 @@
                         <p>First Chunk: <a href="https://gateway.irys.xyz/${receiptIds[0]}" target="_blank">View</a></p>
                     `;
                     
-                    // 如果上传了元数据，显示元数据ID
                     if (this.metadataId) {
-                        resultHtml = `
-                            <h3>Upload Successful!</h3>
-                            <p>Metadata Transaction ID: ${this.metadataId}</p>
-                            <p>PDF Chunks: ${receiptIds.length}</p>
-                        `;
+                        resultHtml += `<p>Metadata ID: ${this.metadataId}</p>`;
                     }
                     
                     this.elements.uploadResult.innerHTML = resultHtml;
@@ -361,23 +477,8 @@
                     this.elements.status.textContent = 'Upload failed';
                 } finally {
                     this.elements.uploadBtn.disabled = false;
-                    this.metadataId = null; // 重置元数据ID
+                    this.metadataId = null;
                 }
-            }
-
-            async slicePDF(file) {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const base64 = e.target.result.split(',')[1];
-                        const chunks = [];
-                        for (let i = 0; i < base64.length; i += this.MAX_CHUNK_SIZE) {
-                            chunks.push(base64.slice(i, i + this.MAX_CHUNK_SIZE));
-                        }
-                        resolve(chunks);
-                    };
-                    reader.readAsDataURL(file);
-                });
             }
 
             updateProgress(current, total) {

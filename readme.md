@@ -57,8 +57,7 @@ Each functional component (widget) in SciBox is:
 - Integration with more academic databases
 - Mobile application development
 
-## Links
-- Paper Upload System: [Uploader Interface](https://uploader.irys.xyz/28CMUfviKfsEquZ9YCwxwPvJoUMujDLEJvqsuhcBXRQL/index.html)
+
 
 ---
 
