@@ -143,6 +143,19 @@ const layoutContent = {
                 right: 15px;
             }
         }
+
+        .error-message {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: var(--bg-secondary-light);
+            border-left: 4px solid #e53e3e;
+            color: var(--text-primary-light);
+        }
+
+        .dark-theme .error-message {
+            background-color: var(--bg-secondary-dark);
+            color: var(--text-primary-dark);
+        }
     `,
     js: `
         // Theme toggle functionality
@@ -189,44 +202,65 @@ const layoutContent = {
         // Load widget function
         async function loadWidget(containerId, widgetType) {
             try {
-                const query = \`
-                    query {
-                        transactions(
-                            tags: [
-                                { name: "Content-Type", values: ["application/json"] },
-                                { name: "scinet", values: ["\${widgetType}"] },
-                                { name: "Version", values: ["0.1.2"] }
-                            ],
-                            first: 1,
-                            order: DESC
-                        ) {
-                            edges {
-                                node {
-                                    id
-                                    tags {
-                                        name
-                                        value
-                                    }
-                                }
-                            }
-                        }
-                    }\`;
+                const query = 'query GetWidget { transactions(tags: [{ name: "Content-Type", values: ["application/json"] }, { name: "scinet", values: ["' + widgetType + '"] }, { name: "Version", values: ["0.1.3"] }], owners: ["A5Hzm1b3mtQfYfU6q5qvKeVJmoaReCvthwfHuZkBBdAQ"], limit: 1, order: DESC) { edges { node { id address tags { name value } } } } }';
+
+                // Debug: Log the query and request details
+                console.log('Widget Type:', widgetType);
+                console.log('GraphQL Query:', query);
+                const requestBody = JSON.stringify({ query });
+                console.log('Request Body:', requestBody);
 
                 const response = await fetch('https://uploader.irys.xyz/graphql', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: requestBody
                 });
 
-                const result = await response.json();
-                if (result.data?.transactions?.edges?.length > 0) {
-                    const layoutId = result.data.transactions.edges[0].node.id;
-                    const layoutResponse = await fetch(\`https://gateway.irys.xyz/\${layoutId}\`);
-                    const layout = await layoutResponse.json();
-                    applyWidget(containerId, layout);
+                // Debug: Log the response
+                console.log('Response Status:', response.status);
+                const responseText = await response.text();
+                console.log('Raw Response:', responseText);
+                
+                try {
+                    const result = JSON.parse(responseText);
+                    console.log('Response Data:', result);
+
+                    if (result.errors) {
+                        console.error('GraphQL Errors:', result.errors);
+                        throw new Error(JSON.stringify(result.errors));
+                    }
+
+                    if (result.data?.transactions?.edges?.length > 0) {
+                        const edge = result.data.transactions.edges[0];
+                        if (edge.node.address === 'A5Hzm1b3mtQfYfU6q5qvKeVJmoaReCvthwfHuZkBBdAQ') {
+                            const layoutId = edge.node.id;
+                            const layoutResponse = await fetch(\`https://gateway.irys.xyz/\${layoutId}\`);
+                            const layout = await layoutResponse.json();
+                            applyWidget(containerId, layout);
+                        } else {
+                            console.error(\`Invalid owner for \${widgetType} widget\`);
+                            const container = document.getElementById(containerId);
+                            if (container) {
+                                container.innerHTML = \`<div class="error-message">Error: Unable to load \${widgetType} component</div>\`;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error parsing response:', error);
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = \`<div class="error-message">Error: Unable to parse response</div>\`;
+                    }
                 }
             } catch (error) {
                 console.error(\`Error loading \${widgetType} widget:\`, error);
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = \`<div class="error-message">Error: Unable to load \${widgetType} component</div>\`;
+                }
             }
         }
 
