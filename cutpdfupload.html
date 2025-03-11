@@ -177,6 +177,7 @@
                 this.initEventListeners();
                 this.wallet = null;
                 this.irys = null;
+                this.hasEnoughTokens = false;
             }
 
             initElements() {
@@ -232,34 +233,36 @@
                         this.elements.status.textContent = 'Please install Solana wallet';
                         return;
                     }
+
                     await window.solana.connect();
                     this.wallet = window.solana;
                     
                     this.elements.status.textContent = 'Checking token balance...';
                     
                     try {
-                        // 检查代币余额
                         const balance = await this.checkTokenBalance();
                         
-                        if (balance >= this.MIN_TOKEN_AMOUNT) {
+                        if (this.hasEnoughTokens) {
                             this.elements.status.textContent = `Connected: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)} | SCIHUB: ${balance}`;
                             this.elements.connectBtn.textContent = 'Connected';
                             this.elements.initIrysBtn.disabled = false;
                         } else {
                             this.elements.status.textContent = `Insufficient SCIHUB tokens: ${balance}/${this.MIN_TOKEN_AMOUNT} required`;
                             this.elements.initIrysBtn.disabled = true;
+                            this.elements.uploadBtn.disabled = true;
+                            alert(`You need at least ${this.MIN_TOKEN_AMOUNT} SCIHUB tokens to upload PDFs. Current balance: ${balance}`);
                         }
                     } catch (balanceError) {
                         console.error('Failed to check token balance:', balanceError);
                         this.elements.status.textContent = 'Unable to check token balance. Please try again later.';
-                        // 仍然显示钱包已连接
-                        this.elements.connectBtn.textContent = 'Connected';
-                        // 暂时禁用初始化按钮
                         this.elements.initIrysBtn.disabled = true;
+                        this.elements.uploadBtn.disabled = true;
                     }
                 } catch (error) {
                     console.error('Wallet connection error:', error);
                     this.elements.status.textContent = 'Connection failed: ' + (error.message || 'Unknown error');
+                    this.elements.initIrysBtn.disabled = true;
+                    this.elements.uploadBtn.disabled = true;
                 }
             }
 
@@ -270,7 +273,6 @@
                         wsEndpoint: this.RPC_ENDPOINT.replace('https://', 'wss://')
                     });
                     
-                    // 获取用户的所有代币账户
                     const tokenAccounts = await connection.getTokenAccountsByOwner(
                         this.wallet.publicKey,
                         {
@@ -278,41 +280,51 @@
                         }
                     );
 
-                    // 如果找到账户，解析余额
                     if (tokenAccounts.value.length > 0) {
                         const accountInfo = await connection.getParsedAccountInfo(
                             tokenAccounts.value[0].pubkey
                         );
                         
                         if (accountInfo.value?.data?.parsed?.info?.tokenAmount?.uiAmount !== undefined) {
-                            return accountInfo.value.data.parsed.info.tokenAmount.uiAmount;
+                            const balance = accountInfo.value.data.parsed.info.tokenAmount.uiAmount;
+                            this.hasEnoughTokens = balance >= this.MIN_TOKEN_AMOUNT;
+                            return balance;
                         }
                     }
                     
+                    this.hasEnoughTokens = false;
                     return 0;
                 } catch (error) {
                     console.error('Error checking token balance:', error);
+                    this.hasEnoughTokens = false;
                     throw error;
                 }
             }
 
             async initializeIrys() {
                 try {
+                    if (!this.hasEnoughTokens) {
+                        alert(`You need at least ${this.MIN_TOKEN_AMOUNT} SCIHUB tokens to upload PDFs.`);
+                        return;
+                    }
+
                     const originalSignMessage = window.solana.signMessage;
                     window.solana.signMessage = async (msg) => {
                         const signedMessage = await originalSignMessage.call(window.solana, msg);
                         return signedMessage.signature || signedMessage;
                     };
+
                     this.irys = await WebIrys.WebUploader(WebIrys.WebSolana).withProvider(window.solana);
                     this.elements.status.textContent = `Ready to upload (${this.irys.address.slice(0,4)}...${this.irys.address.slice(-4)})`;
                     this.elements.initIrysBtn.textContent = 'Initialized';
                     
-                    // 如果已经选择了文件，启用上传按钮
                     if (this.pdfFile) {
                         this.elements.uploadBtn.disabled = false;
                     }
                 } catch (error) {
+                    console.error('Irys initialization error:', error);
                     this.elements.status.textContent = 'Initialization failed';
+                    this.elements.uploadBtn.disabled = true;
                 }
             }
 
@@ -378,7 +390,10 @@
             }
 
             async uploadPDF() {
-                if (!this.pdfFile || !this.irys) return;
+                if (!this.pdfFile || !this.irys || !this.hasEnoughTokens) {
+                    alert(`You need at least ${this.MIN_TOKEN_AMOUNT} SCIHUB tokens to upload PDFs.`);
+                    return;
+                }
                 
                 const title = this.elements.titleInput.value.trim();
                 const doi = this.elements.doiInput.value.trim();
