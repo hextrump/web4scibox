@@ -126,9 +126,85 @@
             border-radius: 4px;
             resize: vertical;
         }
+
+        .wallet-selector {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        .wallet-selector h3 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .wallet-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .wallet-option:hover {
+            background-color: #f0f9ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .wallet-option img {
+            width: 32px;
+            height: 32px;
+            margin-right: 12px;
+            border-radius: 8px;
+        }
+
+        .wallet-option span {
+            font-size: 16px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
     </style>
 </head>
 <body>
+    <div class="overlay" id="overlay"></div>
+    <div class="wallet-selector" id="walletSelector">
+        <h3>Select Wallet</h3>
+        <div class="wallet-option" data-wallet="phantom">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDgiIGhlaWdodD0iMTA4IiB2aWV3Qm94PSIwIDAgMTA4IDEwOCIgZmlsbD0ibm9uZSI+CjxyZWN0IHdpZHRoPSIxMDgiIGhlaWdodD0iMTA4IiByeD0iMjYiIGZpbGw9IiNBQjlGRjIiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik00Ni41MjY3IDY5LjkyMjlDNDIuNzY4NiA3Mi42ODQ5IDM3Ljk4NzQgNzQuMzg3MiAzMi44NTI5IDc0LjM4NzJDMTkuNDM3MiA3NC4zODcyIDguNTc3NjQgNjMuNTI3NiA4LjU3NzY0IDUwLjExMTlDOC41Nzc2NCAzNi42OTYyIDE5LjQzNzIgMjUuODM2NiAzMi44NTI5IDI1LjgzNjZDMzcuOTg3NCAyNS44MzY2IDQyLjc2ODYgMjcuNTM4OSA0Ni41MjY3IDMwLjMwMDlDNTAuMjg0OCAyNy41Mzg5IDU1LjA2NTkgMjUuODM2NiA2MC4yMDA1IDI1LjgzNjZDNzMuNjE2MSAyNS44MzY2IDg0LjQ3NTcgMzYuNjk2MiA4NC40NzU3IDUwLjExMTlDODQuNDc1NyA2My41Mjc2IDczLjYxNjEgNzQuMzg3MiA2MC4yMDA1IDc0LjM4NzJDNTUuMDY1OSA3NC4zODcyIDUwLjI4NDggNzIuNjg0OSA0Ni41MjY3IDY5LjkyMjlaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI2MC4yMDA3IiBjeT0iNTAuMTExOSIgcj0iOC4yMTMyOCIgZmlsbD0iI0FCOUZGMiIvPgo8Y2lyY2xlIGN4PSIzMi44NTI4IiBjeT0iNTAuMTExOSIgcj0iOC4yMTMyOCIgZmlsbD0iI0FCOUZGMiIvPgo8L3N2Zz4K" alt="Phantom">
+            <span>Phantom Wallet</span>
+        </div>
+        <div class="wallet-option" data-wallet="okx">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iOCIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTYgNkgxMFYxMEg2VjZaTTEwIDEwSDE0VjE0SDEwVjEwWk0xNCAxNEgxOFYxOEgxNFYxNFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==" alt="OKX">
+            <span>OKX Wallet</span>
+        </div>
+    </div>
     <div class="pdf-uploader">
         <div class="header">
             <h1>SciBox PDF Uploader</h1>
@@ -173,6 +249,7 @@
                 this.TOKEN_MINT = 'GxdTh6udNstGmLLk9ztBb6bkrms7oLbrJp5yzUaVpump';
                 this.MIN_TOKEN_AMOUNT = 10000;
                 this.RPC_ENDPOINT = 'https://indulgent-warmhearted-paper.solana-mainnet.quiknode.pro/738b88223793499b6ea217c37ef429603e9b0544/';
+                this.selectedWallet = null;
                 this.initElements();
                 this.initEventListeners();
                 this.wallet = null;
@@ -196,7 +273,9 @@
                     progress: document.getElementById('progress'),
                     progressFill: document.getElementById('progressFill'),
                     progressText: document.getElementById('progressText'),
-                    uploadResult: document.getElementById('uploadResult')
+                    uploadResult: document.getElementById('uploadResult'),
+                    overlay: document.getElementById('overlay'),
+                    walletSelector: document.getElementById('walletSelector')
                 };
             }
 
@@ -207,6 +286,9 @@
                 this.elements.dropZone.addEventListener('click', () => this.elements.fileInput.click());
                 this.elements.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
                 this.initDropZone();
+                document.querySelectorAll('.wallet-option').forEach(option => {
+                    option.addEventListener('click', () => this.selectWallet(option.dataset.wallet));
+                });
             }
 
             initDropZone() {
@@ -227,15 +309,79 @@
                 });
             }
 
+            showWalletSelector() {
+                this.elements.overlay.style.display = 'block';
+                this.elements.walletSelector.style.display = 'block';
+            }
+
+            hideWalletSelector() {
+                this.elements.overlay.style.display = 'none';
+                this.elements.walletSelector.style.display = 'none';
+            }
+
+            async detectWallets() {
+                const availableWallets = [];
+                
+                if (window.phantom) {
+                    availableWallets.push('phantom');
+                }
+                
+                if (window.okxwallet) {
+                    availableWallets.push('okx');
+                }
+
+                return availableWallets;
+            }
+
+            async selectWallet(walletName) {
+                this.selectedWallet = walletName;
+                this.hideWalletSelector();
+                
+                try {
+                    switch (walletName) {
+                        case 'phantom':
+                            if (!window.phantom) {
+                                throw new Error('Phantom wallet not found');
+                            }
+                            this.wallet = window.phantom.solana;
+                            break;
+                        case 'okx':
+                            if (!window.okxwallet) {
+                                throw new Error('OKX wallet not found');
+                            }
+                            this.wallet = window.okxwallet.solana;
+                            break;
+                        default:
+                            throw new Error('Unsupported wallet');
+                    }
+
+                    await this.connectWallet();
+                } catch (error) {
+                    console.error('Wallet selection error:', error);
+                    this.elements.status.textContent = 'Wallet selection failed: ' + error.message;
+                }
+            }
+
             async connectWallet() {
                 try {
-                    if (!window.solana) {
-                        this.elements.status.textContent = 'Please install Solana wallet';
+                    if (!this.wallet) {
+                        const availableWallets = await this.detectWallets();
+                        
+                        if (availableWallets.length === 0) {
+                            this.elements.status.textContent = 'Please install a Solana wallet (Phantom or OKX)';
+                            return;
+                        }
+                        
+                        if (availableWallets.length === 1) {
+                            await this.selectWallet(availableWallets[0]);
+                            return;
+                        }
+                        
+                        this.showWalletSelector();
                         return;
                     }
 
-                    await window.solana.connect();
-                    this.wallet = window.solana;
+                    await this.wallet.connect();
                     
                     this.elements.status.textContent = 'Checking token balance...';
                     
@@ -243,7 +389,7 @@
                         const balance = await this.checkTokenBalance();
                         
                         if (this.hasEnoughTokens) {
-                            this.elements.status.textContent = `Connected: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)} | SCIHUB: ${balance}`;
+                            this.elements.status.textContent = `Connected to ${this.selectedWallet}: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)} | SCIHUB: ${balance}`;
                             this.elements.connectBtn.textContent = 'Connected';
                             this.elements.initIrysBtn.disabled = false;
                         } else {
