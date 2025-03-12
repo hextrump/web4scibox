@@ -68,7 +68,7 @@ const uploadWidget = {
     `,
     js: `
         function openUploader() {
-            window.open('https://uploader.irys.xyz/FUGMjwb5t11V8eoR94NgWAG752MVV2hkEy4bNzkmRNXE/index.html', '_blank');
+            window.open('https://uploader.irys.xyz/EJRDZTrU9SUx93DfdyqtSGYGaEKRjuc9EF5xF4jKiwkc/index.html', '_blank');
         }
     `
 };
