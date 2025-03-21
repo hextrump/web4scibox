@@ -6,84 +6,139 @@
     <title>SciBox PDF Uploader</title>
     <style>
         :root {
-            --color-primary: #8DC63F;
-            --color-primary-hover: #4CAF50;
-            --color-border: #e2e8f0;
-            --color-background: #f5f5f5;
-            --color-white: #ffffff;
+            --bg-dark: #0a0b14;
+            --bg-secondary-dark: #12141a;
+            --text-primary-dark: #ffffff;
+            --text-secondary-dark: #a0aec0;
+            --accent-dark: #818cf8;
+            --accent-hover-dark: #6366f1;
+            --border-dark: rgba(255, 255, 255, 0.05);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --gradient-start: #4338ca;
+            --gradient-mid: #6366f1;
+            --gradient-end: #8b5cf6;
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
             max-width: 800px;
             margin: 20px auto;
             padding: 20px;
-            background-color: var(--color-background);
+            background-color: var(--bg-dark);
+            color: var(--text-primary-dark);
+            line-height: 1.6;
         }
 
         .pdf-uploader {
-            background-color: var(--color-white);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: var(--bg-secondary-dark);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow-dark);
+            border: 1px solid var(--border-dark);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin: 0;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .status {
             margin: 20px 0;
             padding: 15px;
-            border-radius: 8px;
-            background-color: #edf2f7;
-            border-left: 4px solid var(--color-primary);
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--accent-dark);
+            color: var(--text-primary-dark);
+            font-size: 14px;
         }
 
         .dropzone {
-            border: 2px dashed var(--color-border);
-            border-radius: 8px;
+            border: 2px dashed var(--border-dark);
+            border-radius: 12px;
             padding: 40px;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .dropzone.drag-over {
-            border-color: var(--color-primary);
-            background-color: #f0f9ff;
+            border-color: var(--accent-dark);
+            background: rgba(99, 102, 241, 0.1);
         }
 
-        .metadata {
-            margin-bottom: 20px;
-        }
-
-        .metadata input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-        }
-
-        .button {
-            padding: 10px 20px;
-            background-color: var(--color-primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .dropzone p {
+            color: var(--text-secondary-dark);
+            margin: 0;
             font-size: 16px;
         }
 
+        .metadata {
+            margin-bottom: 30px;
+        }
+
+        .metadata input, .metadata textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            color: var(--text-primary-dark);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .metadata input:focus, .metadata textarea:focus {
+            outline: none;
+            border-color: var(--accent-dark);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .metadata textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
         .button:hover {
-            background-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
 
         .button:disabled {
-            background-color: #a0aec0;
+            background: rgba(255, 255, 255, 0.1);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .progress {
@@ -92,39 +147,48 @@
         }
 
         .progress-bar {
-            height: 20px;
-            background-color: #e2e8f0;
-            border-radius: 10px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background-color: var(--color-primary);
+            background: linear-gradient(90deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
             width: 0%;
             transition: width 0.3s ease;
         }
 
         .progress-text {
             text-align: center;
-            margin-top: 5px;
+            margin-top: 8px;
+            color: var(--text-secondary-dark);
+            font-size: 14px;
         }
 
         #uploadResult {
             margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             display: none;
+            color: var(--text-primary-dark);
         }
 
-        .metadata textarea {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            resize: vertical;
+        #uploadResult h3 {
+            margin: 0 0 15px 0;
+            color: var(--accent-dark);
+        }
+
+        #uploadResult a {
+            color: var(--accent-dark);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        #uploadResult a:hover {
+            color: var(--accent-hover-dark);
         }
 
         .wallet-selector {
@@ -133,18 +197,19 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: var(--bg-secondary-dark);
             padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow-dark);
             z-index: 1000;
             min-width: 300px;
+            border: 1px solid var(--border-dark);
         }
 
         .wallet-selector h3 {
             margin: 0 0 16px 0;
             font-size: 18px;
-            color: #1a1a1a;
+            color: var(--text-primary-dark);
             text-align: center;
         }
 
@@ -153,17 +218,17 @@
             align-items: center;
             padding: 12px 16px;
             margin: 8px 0;
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
-            background: white;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .wallet-option:hover {
-            background-color: #f0f9ff;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+            border-color: var(--accent-dark);
         }
 
         .wallet-option img {
@@ -175,7 +240,7 @@
 
         .wallet-option span {
             font-size: 16px;
-            color: #1a1a1a;
+            color: var(--text-primary-dark);
             font-weight: 500;
         }
 
@@ -186,9 +251,10 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 999;
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
     </style>
 </head>
@@ -213,7 +279,6 @@
         <div class="status" id="status">Status: Not connected</div>
 
         <button class="button" id="connectBtn">Connect Wallet</button>
-        <button class="button" id="initIrysBtn" disabled>Initialize Irys</button>
 
         <div class="dropzone" id="dropZone">
             <p>Drag and drop your PDF file here or click to select</p>
@@ -224,7 +289,6 @@
             <input type="text" id="titleInput" placeholder="Enter paper title...">
             <input type="text" id="doiInput" placeholder="Enter DOI...">
             <input type="text" id="authorsInput" placeholder="Enter authors (comma separated)...">
-            <input type="text" id="aidInput" placeholder="Enter paper ID...">
             <textarea id="abstractInput" placeholder="Enter abstract..." rows="4"></textarea>
         </div>
 
@@ -261,14 +325,12 @@
                 this.elements = {
                     status: document.getElementById('status'),
                     connectBtn: document.getElementById('connectBtn'),
-                    initIrysBtn: document.getElementById('initIrysBtn'),
                     uploadBtn: document.getElementById('uploadBtn'),
                     dropZone: document.getElementById('dropZone'),
                     fileInput: document.getElementById('fileInput'),
                     titleInput: document.getElementById('titleInput'),
                     doiInput: document.getElementById('doiInput'),
                     authorsInput: document.getElementById('authorsInput'),
-                    aidInput: document.getElementById('aidInput'),
                     abstractInput: document.getElementById('abstractInput'),
                     progress: document.getElementById('progress'),
                     progressFill: document.getElementById('progressFill'),
@@ -281,7 +343,6 @@
 
             initEventListeners() {
                 this.elements.connectBtn.addEventListener('click', () => this.connectWallet());
-                this.elements.initIrysBtn.addEventListener('click', () => this.initializeIrys());
                 this.elements.uploadBtn.addEventListener('click', () => this.uploadPDF());
                 this.elements.dropZone.addEventListener('click', () => this.elements.fileInput.click());
                 this.elements.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
@@ -391,23 +452,20 @@
                         if (this.hasEnoughTokens) {
                             this.elements.status.textContent = `Connected to ${this.selectedWallet}: ${this.wallet.publicKey.toString().slice(0,4)}...${this.wallet.publicKey.toString().slice(-4)} | SCIHUB: ${balance}`;
                             this.elements.connectBtn.textContent = 'Connected';
-                            this.elements.initIrysBtn.disabled = false;
+                            await this.initializeIrys();
                         } else {
                             this.elements.status.textContent = `Insufficient SCIHUB tokens: ${balance}/${this.MIN_TOKEN_AMOUNT} required`;
-                            this.elements.initIrysBtn.disabled = true;
                             this.elements.uploadBtn.disabled = true;
                             alert(`You need at least ${this.MIN_TOKEN_AMOUNT} SCIHUB tokens to upload PDFs. Current balance: ${balance}`);
                         }
                     } catch (balanceError) {
                         console.error('Failed to check token balance:', balanceError);
                         this.elements.status.textContent = 'Unable to check token balance. Please try again later.';
-                        this.elements.initIrysBtn.disabled = true;
                         this.elements.uploadBtn.disabled = true;
                     }
                 } catch (error) {
                     console.error('Wallet connection error:', error);
                     this.elements.status.textContent = 'Connection failed: ' + (error.message || 'Unknown error');
-                    this.elements.initIrysBtn.disabled = true;
                     this.elements.uploadBtn.disabled = true;
                 }
             }
@@ -462,7 +520,6 @@
 
                     this.irys = await WebIrys.WebUploader(WebIrys.WebSolana).withProvider(window.solana);
                     this.elements.status.textContent = `Ready to upload (${this.irys.address.slice(0,4)}...${this.irys.address.slice(-4)})`;
-                    this.elements.initIrysBtn.textContent = 'Initialized';
                     
                     if (this.pdfFile) {
                         this.elements.uploadBtn.disabled = false;
@@ -517,7 +574,6 @@
                             const bytes = new Uint8Array(arrayBuffer);
                             const chunks = [];
                             
-                            // 将数据分块并编码为 base64
                             for (let i = 0; i < bytes.length; i += this.MAX_CHUNK_SIZE) {
                                 const chunk = bytes.slice(i, i + this.MAX_CHUNK_SIZE);
                                 const base64Chunk = btoa(
@@ -544,7 +600,6 @@
                 const title = this.elements.titleInput.value.trim();
                 const doi = this.elements.doiInput.value.trim();
                 const authors = this.elements.authorsInput.value.trim();
-                const aid = this.elements.aidInput.value.trim();
                 const abstract = this.elements.abstractInput.value.trim();
                 
                 if (!doi) {
@@ -556,14 +611,12 @@
                     this.elements.uploadBtn.disabled = true;
                     this.elements.progress.style.display = 'block';
                     
-                    // 上传元数据
-                    if (title || authors || aid || abstract) {
+                    if (title || authors || abstract) {
                         this.elements.status.textContent = 'Uploading metadata...';
                         const metadata = {
                             title: title || '',
                             doi: doi,
                             authors: authors || '',
-                            aid: aid || '',
                             abstract: abstract || ''
                         };
 
@@ -576,7 +629,6 @@
 
                         if (title) metadataTags.push({ name: "title", value: title });
                         if (authors) metadataTags.push({ name: "authors", value: authors });
-                        if (aid) metadataTags.push({ name: "aid", value: aid });
 
                         await this.retry(async () => {
                             const metadataReceipt = await this.irys.upload(JSON.stringify(metadata), { tags: metadataTags });
@@ -584,11 +636,9 @@
                         });
                     }
 
-                    // 处理 PDF 文件
                     this.elements.status.textContent = 'Processing PDF...';
                     const chunks = await this.processPDF(this.pdfFile);
                     
-                    // 上传 PDF chunks
                     this.elements.status.textContent = 'Uploading PDF chunks...';
                     const receiptIds = [];
                     
@@ -618,7 +668,6 @@
                         }
                     }
                     
-                    // 显示上传结果
                     this.elements.uploadResult.style.display = 'block';
                     let resultHtml = `
                         <h3>Upload Successful!</h3>
