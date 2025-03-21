@@ -2,13 +2,21 @@ const searchWidget = {
     html: `
         <div class="search-widget">
             <div class="search-box">
-                <select id="searchType">
-                    <option value="doi">DOI</option>
-                    <option value="title">Title</option>
-                    <option value="aid">arXiv ID</option>
-                </select>
-                <input type="text" id="searchInput" placeholder="Search papers...">
-                <button onclick="searchPapers()">Search</button>
+                <div class="search-input-group">
+                    <select id="searchType">
+                        <option value="doi">DOI</option>
+                        <option value="title">Title</option>
+                        <option value="aid">arXiv ID</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search papers...">
+                </div>
+                <button onclick="searchPapers()" class="search-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Search
+                </button>
             </div>
             <div id="searchResults" class="search-results">
                 <!-- Search results will be displayed here -->
@@ -22,219 +30,258 @@ const searchWidget = {
             max-width: 100%;
             box-sizing: border-box;
         }
+
         .search-box {
             display: flex;
-            gap: 10px;
-            padding: 15px;
-            background: var(--bg-secondary-light);
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-secondary-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
             width: 100%;
             box-sizing: border-box;
-            flex-wrap: wrap;
-            overflow: hidden;
+            transition: all var(--transition-speed);
         }
-        .dark-theme .search-box {
-            background: var(--bg-secondary-dark);
-            box-shadow: 0 1px 3px var(--shadow-dark);
-        }
-        .search-box select {
-            padding: 8px;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
+
+        body.light-theme .search-box {
             background: var(--bg-light);
-            color: var(--text-primary-light);
-            min-width: 100px;
-            flex-shrink: 0;
-            margin: 0;
+            border-color: var(--border-light);
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-box select {
+            padding: 12px 16px;
+            border: 2px solid var(--border-dark);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text-primary-dark);
+            min-width: 120px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed);
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
-            background-position: right 8px center;
+            background-position: right 12px center;
             background-size: 16px;
-            padding-right: 32px;
+            padding-right: 40px;
         }
-        .dark-theme .search-box select {
-            border-color: var(--border-dark);
-            background-color: var(--bg-dark);
-            color: var(--text-primary-dark);
+
+        body.light-theme .search-box select {
+            border-color: var(--border-light);
+            background-color: var(--bg-light);
+            color: var(--text-primary-light);
         }
+
+        .search-box select:hover {
+            border-color: var(--accent-dark);
+        }
+
+        body.light-theme .search-box select:hover {
+            border-color: var(--accent-light);
+        }
+
         .search-box input {
             flex: 1;
             min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
+            padding: 12px 16px;
+            border: 2px solid var(--border-dark);
+            border-radius: 8px;
             font-size: 16px;
-            background: var(--bg-light);
-            color: var(--text-primary-light);
-            margin: 0;
-            outline: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .search-box input:focus {
-            border-color: var(--accent-light);
-            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.1);
-        }
-        .dark-theme .search-box input:focus {
-            border-color: var(--accent-dark);
-            box-shadow: 0 0 0 2px rgba(100, 255, 218, 0.1);
-        }
-        .dark-theme .search-box input {
-            border-color: var(--border-dark);
             background: var(--bg-dark);
             color: var(--text-primary-dark);
+            transition: all var(--transition-speed);
         }
-        .search-box button {
-            padding: 8px 20px;
-            background: var(--accent-light);
-            color: white;
+
+        body.light-theme .search-box input {
+            border-color: var(--border-light);
+            background: var(--bg-light);
+            color: var(--text-primary-light);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-dark);
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+        }
+
+        body.light-theme .search-box input:focus {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--accent-dark);
+            color: var(--bg-dark);
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
-            flex-shrink: 0;
+            transition: all var(--transition-speed);
             white-space: nowrap;
         }
-        .dark-theme .search-box button {
-            background: var(--accent-dark);
-            color: var(--bg-dark);
-        }
-        .search-box button:hover {
-            background: #357abd;
-        }
-        .dark-theme .search-box button:hover {
-            background: #4fd1b5;
-        }
-        .search-results {
-            margin-top: 20px;
-            width: 100%;
-        }
-        .paper-item {
-            background: var(--bg-light);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px var(--shadow-light);
-            margin-bottom: 15px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .dark-theme .paper-item {
-            background: var(--bg-secondary-dark);
-            box-shadow: 0 2px 4px var(--shadow-dark);
-        }
-        .paper-item h3 {
-            color: var(--text-primary-light);
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
-            word-break: break-word;
-        }
-        .dark-theme .paper-item h3 {
-            color: var(--text-primary-dark);
-        }
-        .paper-meta {
-            color: var(--text-secondary-light);
-            font-size: 0.9em;
-            margin: 5px 0;
-            word-break: break-all;
-        }
-        .dark-theme .paper-meta {
-            color: var(--text-secondary-dark);
-        }
-        .paper-authors {
-            color: var(--text-secondary-light);
-            font-size: 0.95em;
-            margin: 5px 0;
-            word-break: break-word;
-        }
-        .dark-theme .paper-authors {
-            color: var(--text-secondary-dark);
-        }
-        .paper-abstract {
-            color: var(--text-secondary-light);
-            font-size: 0.9em;
-            margin: 10px 0;
-            line-height: 1.5;
-            word-break: break-word;
-        }
-        .dark-theme .paper-abstract {
-            color: var(--text-secondary-dark);
-        }
-        .paper-actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .paper-actions button {
+
+        body.light-theme .search-button {
             background: var(--accent-light);
             color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-            flex-shrink: 0;
         }
-        .dark-theme .paper-actions button {
+
+        .search-button:hover {
+            background: var(--accent-hover-dark);
+            transform: translateY(-1px);
+        }
+
+        body.light-theme .search-button:hover {
+            background: var(--accent-hover-light);
+        }
+
+        .search-results {
+            margin-top: 24px;
+            width: 100%;
+        }
+
+        .paper-item {
+            background: var(--bg-secondary-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all var(--transition-speed);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        body.light-theme .paper-item {
+            background: var(--bg-light);
+            border-color: var(--border-light);
+        }
+
+        .paper-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .paper-item h3 {
+            color: var(--text-primary-dark);
+            margin: 0 0 12px 0;
+            font-size: 1.25em;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        body.light-theme .paper-item h3 {
+            color: var(--text-primary-light);
+        }
+
+        .paper-meta,
+        .paper-authors,
+        .paper-abstract {
+            color: var(--text-secondary-dark);
+            line-height: 1.6;
+        }
+
+        body.light-theme .paper-meta,
+        body.light-theme .paper-authors,
+        body.light-theme .paper-abstract {
+            color: var(--text-secondary-light);
+        }
+
+        .paper-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .paper-actions button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
             background: var(--accent-dark);
             color: var(--bg-dark);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
         }
+
+        body.light-theme .paper-actions button {
+            background: var(--accent-light);
+            color: white;
+        }
+
         .paper-actions button:hover {
-            background: #357abd;
+            background: var(--accent-hover-dark);
         }
-        .dark-theme .paper-actions button:hover {
-            background: #4fd1b5;
+
+        body.light-theme .paper-actions button:hover {
+            background: var(--accent-hover-light);
         }
+
         .paper-actions button:disabled {
-            background: var(--border-light);
-            cursor: not-allowed;
-        }
-        .dark-theme .paper-actions button:disabled {
             background: var(--border-dark);
+            opacity: 0.5;
+        }
+
+        body.light-theme .paper-actions button:disabled {
+            background: var(--border-light);
         }
 
         @media (max-width: 768px) {
             .search-widget {
-                width: 100%;
-                padding: 0;
                 margin: 0 0 20px 0;
             }
+
             .search-box {
                 flex-direction: column;
                 gap: 12px;
-                padding: 12px;
-                margin: 0;
-                width: 100%;
-                box-sizing: border-box;
+                padding: 16px;
             }
+
+            .search-input-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
             .search-box select,
-            .search-box input,
-            .search-box button {
+            .search-box input {
                 width: 100%;
                 min-width: unset;
-                margin: 0;
-                box-sizing: border-box;
             }
-            .search-box input {
-                flex: none;
-            }
-            .paper-item {
-                padding: 15px;
-                margin: 0 0 15px 0;
+
+            .search-button {
                 width: 100%;
-                box-sizing: border-box;
+                justify-content: center;
             }
+
+            .paper-item {
+                padding: 16px;
+            }
+
             .paper-actions {
                 flex-direction: column;
             }
+
             .paper-actions button {
                 width: 100%;
-                text-align: center;
+                justify-content: center;
             }
         }
     `,
@@ -245,11 +292,12 @@ const searchWidget = {
             const resultsDiv = document.getElementById('searchResults');
             
             if (!searchInput.trim()) {
-                resultsDiv.innerHTML = '<p>Please enter a search term</p>';
+                resultsDiv.innerHTML = '<div class="error-message">Please enter a search term</div>';
                 return;
             }
 
-            resultsDiv.innerHTML = '<p>Searching...</p>';
+            // Add loading state
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
             
             try {
                 // 第一步：搜索 metadata
@@ -352,15 +400,14 @@ const searchWidget = {
 
                 displayResults(papers);
             } catch (error) {
-                resultsDiv.innerHTML = '<p>Error performing search</p>';
-                console.error('Search error:', error);
+                resultsDiv.innerHTML = '<div class="error-message">Error: Unable to perform search</div>';
             }
         }
 
         function displayResults(papers) {
             const resultsDiv = document.getElementById('searchResults');
             if (papers.length === 0) {
-                resultsDiv.innerHTML = '<p>No papers found</p>';
+                resultsDiv.innerHTML = '<div class="error-message">No papers found</div>';
                 return;
             }
 

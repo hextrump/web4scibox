@@ -1,7 +1,12 @@
 const latestPapersWidget = {
     html: `
         <div class="latest-papers-widget">
-            <h2>Latest Papers</h2>
+            <div class="section-header">
+                <h2>Latest Papers</h2>
+                <div class="loading-indicator">
+                    <div class="spinner"></div>
+                </div>
+            </div>
             <div id="latestPapersList" class="papers-list">
                 <!-- Latest papers will be displayed here -->
             </div>
@@ -9,101 +14,244 @@ const latestPapersWidget = {
     `,
     css: `
         .latest-papers-widget {
-            margin-top: 30px;
+            margin-bottom: 30px;
+            width: 100%;
         }
-        .latest-papers-widget h2 {
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
             font-size: 1.5em;
-            color: #2d3748;
-            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--text-primary-dark);
+            margin: 0;
         }
+
+        body.light-theme .section-header h2 {
+            color: var(--text-primary-light);
+        }
+
+        .loading-indicator {
+            display: none;
+        }
+
+        .loading-indicator.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-dark);
+            border-top-color: var(--accent-dark);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        body.light-theme .spinner {
+            border-color: var(--border-light);
+            border-top-color: var(--accent-light);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .papers-list {
-            display: grid;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
+
         .paper-item {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            background: var(--bg-secondary-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            transition: all var(--transition-speed);
+            animation: fadeIn 0.5s ease forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
+
+        body.light-theme .paper-item {
+            background: var(--bg-light);
+            border-color: var(--border-light);
+        }
+
         .paper-item:hover {
             transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
         }
+
         .paper-item h3 {
-            color: #2d3748;
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
+            color: var(--text-primary-dark);
+            margin: 0;
+            font-size: 1.25em;
+            font-weight: 600;
+            line-height: 1.4;
         }
-        .paper-meta {
-            color: #718096;
-            font-size: 0.9em;
-            margin: 5px 0;
+
+        body.light-theme .paper-item h3 {
+            color: var(--text-primary-light);
         }
-        .paper-authors {
-            color: #4a5568;
-            font-size: 0.95em;
-            margin: 5px 0;
-        }
+
+        .paper-meta,
+        .paper-authors,
         .paper-abstract {
-            color: #4a5568;
+            color: var(--text-secondary-dark);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        body.light-theme .paper-meta,
+        body.light-theme .paper-authors,
+        body.light-theme .paper-abstract {
+            color: var(--text-secondary-light);
+        }
+
+        .paper-meta {
             font-size: 0.9em;
-            margin: 10px 0;
-            line-height: 1.5;
         }
+
+        .paper-authors {
+            font-size: 0.95em;
+        }
+
+        .paper-abstract {
+            font-size: 0.95em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
         .paper-actions {
-            margin-top: 15px;
+            margin-top: 8px;
+            display: flex;
+            gap: 12px;
         }
+
         .paper-actions button {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 8px;
-            background: #4a90e2;
-            color: white;
-            border: none;
             padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
+            background: var(--accent-dark);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 8px;
             font-size: 14px;
-            transition: background 0.2s;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
         }
+
+        body.light-theme .paper-actions button {
+            background: var(--accent-light);
+            color: white;
+        }
+
         .paper-actions button:hover {
-            background: #357abd;
+            background: var(--accent-hover-dark);
+            transform: translateY(-1px);
         }
+
+        body.light-theme .paper-actions button:hover {
+            background: var(--accent-hover-light);
+        }
+
         .paper-actions button:disabled {
-            background: #cbd5e0;
+            background: var(--border-dark);
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
+
+        body.light-theme .paper-actions button:disabled {
+            background: var(--border-light);
+        }
+
         .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(10, 11, 20, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            backdrop-filter: blur(4px);
         }
+
+        body.light-theme .loading-overlay {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
         .loading-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
+            background: var(--bg-secondary-dark);
+            padding: 24px;
+            border-radius: var(--border-radius);
             text-align: center;
+            box-shadow: var(--card-shadow);
         }
+
+        body.light-theme .loading-content {
+            background: var(--bg-light);
+        }
+
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 3px solid var(--border-dark);
+            border-top: 3px solid var(--accent-dark);
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 10px auto;
+            margin: 16px auto;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        body.light-theme .loading-spinner {
+            border-color: var(--border-light);
+            border-top-color: var(--accent-light);
+        }
+
+        #loading-status {
+            color: var(--text-primary-dark);
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        body.light-theme #loading-status {
+            color: var(--text-primary-light);
+        }
+
+        @media (max-width: 768px) {
+            .paper-item {
+                padding: 16px;
+            }
+
+            .paper-actions {
+                flex-direction: column;
+            }
+
+            .paper-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .loading-content {
+                width: 90%;
+                max-width: 300px;
+                margin: 0 16px;
+            }
         }
     `,
     js: `
@@ -203,9 +351,12 @@ const latestPapersWidget = {
 
         async function loadLatestPapers() {
             const listDiv = document.getElementById('latestPapersList');
-            listDiv.innerHTML = '<p>Loading latest papers...</p>';
+            const loadingIndicator = document.querySelector('.loading-indicator');
             
             try {
+                loadingIndicator.classList.add('active');
+                listDiv.innerHTML = '<p>Loading latest papers...</p>';
+                
                 const query = \`
                     query {
                         transactions(
@@ -265,6 +416,8 @@ const latestPapersWidget = {
             } catch (error) {
                 listDiv.innerHTML = '<p>Error loading latest papers</p>';
                 console.error('Latest papers error:', error);
+            } finally {
+                loadingIndicator.classList.remove('active');
             }
         }
 
