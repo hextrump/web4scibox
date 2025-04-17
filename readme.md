@@ -64,17 +64,18 @@ Each functional component (widget) in SciBox is:
 SciBox represents a significant step forward in decentralized academic publishing and sharing. By leveraging Web4 technologies and blockchain storage, it provides a robust, censorship-resistant platform for academic knowledge distribution.
 
 
+### v0.1.7
+- Added paper details page and comment section
+- Enhanced upload system with better user experience
 
-// Layout 职责
-- 加载组件
-- 处理组件查询和数据获取
-- 提供最基础的容器布局
-- 管理主题切换
+### v0.1.6
+- Added statistics dashboard for paper count and points
+- Improved upload interface with progress indicators and better UI
+- Enhanced user guidance and feedback
 
-// 组件职责
-- 自己的样式和布局
-- 响应式设计
-- 内部交互逻辑
+### v0.1.5
+- Implemented PDF validation and metadata checks
+- Added paid upload option for complete PDFs based on file size
+- Maintained free upload option for chunked PDFs
 
-0.1.1
-https://uploader.irys.xyz/8F3FmLwBCArk2jYbMqtWJYHbm2NCmRWB7zriPBCSNRqh/index.html
+https://scibox.store
